@@ -12,7 +12,7 @@ import queryString from 'query-string';
 
 import logo from '../res/giftbit.svg';
 import Pagination from './Pagination';
-import VendorCard from './VendorCard';
+import BrandCard from './BrandCard';
 
 import '../styles/App.css';
 
@@ -24,17 +24,17 @@ class App extends Component {
         regions: [],
         minPrice: 0,
         maxPrice: 1000,
-        vendorSearch: "",
-        vendors: [],
-        selectedVendorId: null,
-        vendorsPagination: { limit: 10, offset: 0 },
+        brandSearch: "",
+        brands: [],
+        selectedBrandId: null,
+        brandsPagination: { limit: 10, offset: 0 },
         gifts: [],
         selectedGiftPrice: 0
     };
 
     constructor(props) {
         super(props);
-        this.getVendors = this.getVendors.bind(this);
+        this.getBrands = this.getBrands.bind(this);
         this.getRegions = this.getRegions.bind(this);
         this.getMarketplaceGifts = this.getMarketplaceGifts.bind(this);
         this.sendCampaign = this.sendCampaign.bind(this);
@@ -43,7 +43,7 @@ class App extends Component {
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handlePaginationNext = this.handlePaginationNext.bind(this);
         this.handlePaginationPrev = this.handlePaginationPrev.bind(this);
-        this.handleVendorSelect = this.handleVendorSelect.bind(this);
+        this.handleBrandSelect = this.handleBrandSelect.bind(this);
         this.handleGiftsDialogClose = this.handleGiftsDialogClose.bind(this);
         this.handleSelectedGiftPriceChange = this.handleSelectedGiftPriceChange.bind(this);
         this.isGiftInPriceRange = this.isGiftInPriceRange.bind(this);
@@ -51,51 +51,76 @@ class App extends Component {
     }
 
     componentDidMount() {
-        this.getVendors();
+        this.getBrands();
         this.getRegions();
     }
 
-    getVendors() {
-        const vendorParams = {
+    alertError(endpoint){
+        alert(`${endpoint} ERROR! check console to see giftbit's response`)
+    }
+
+    getBrands() {
+        const brandParams = {
             region: this.state.selectedRegion,
             min_price_in_cents: this.state.minPrice,
             max_price_in_cents: this.state.maxPrice,
-            search: this.state.vendorSearch,
-            limit: this.state.vendorsPagination.limit,
-            offset: this.state.vendorsPagination.offset
+            search: this.state.brandSearch,
+            limit: this.state.brandsPagination.limit,
+            offset: this.state.brandsPagination.offset
         };
-        const queryParams = queryString.stringify(vendorParams);
-        axios.get(`${backendBaseUrl}/vendors?${queryParams}`).then( (response) => {
-            const vendors = response.data.vendors;
-            const vendorsPagination = {};
-            vendorsPagination.total = response.data.total_count;
-            vendorsPagination.limit = response.data.limit;
-            vendorsPagination.offset = response.data.offset;
-            vendorsPagination.results = response.data.number_of_results;
+        const queryParams = queryString.stringify(brandParams);
+        const url = `${backendBaseUrl}/brands?${queryParams}`;
+        console.log("GET", url);
+        axios.get(url).then( (response) => {
+            console.log("RESPONSE /brands", response.data);
+            if (response.data.status === 200) {
+                const brands = response.data.brands;
+                const brandsPagination = {};
+                brandsPagination.total = response.data.total_count;
+                brandsPagination.limit = response.data.limit;
+                brandsPagination.offset = response.data.offset;
+                brandsPagination.results = response.data.number_of_results;
 
-            this.setState({ vendors, vendorsPagination });
+                this.setState({brands, brandsPagination});
+            } else {
+                this.alertError("BRANDS")
+            }
         });
     }
 
     getMarketplaceGifts() {
-        if (this.state.selectedVendorId) {
-            const vendorParams = {
+        if (this.state.selectedBrandId) {
+            const brandParams = {
                 region: this.state.selectedRegion,
                 min_price_in_cents: this.state.minPrice,
                 max_price_in_cents: this.state.maxPrice,
-                vendor: this.state.selectedVendorId
+                brand: this.state.selectedBrandId
             };
-            const queryParams = queryString.stringify(vendorParams);
-            axios.get(`${backendBaseUrl}/marketplaceGifts?${queryParams}`).then( (response) => {
-                this.setState({ gifts: response.data.marketplace_gifts });
+            const queryParams = queryString.stringify(brandParams);
+            const url = `${backendBaseUrl}/marketplaceGifts?${queryParams}`;
+            console.log("GET", url);
+            axios.get(url).then( (response) => {
+                console.log("RESPONSE /marketplaceGifts", response.data);
+                if (response.data.status === 200) {
+                    this.setState({ gifts: response.data.marketplace_gifts });
+                } else {
+                    this.alertError("MARKETPLACEGIFTS")
+                }
             });
         }
     }
 
     getRegions() {
-        axios.get(`${backendBaseUrl}/regions`).then( (response) => {
-            const regions = response.data.regions;
-            this.setState({ regions });
+        const url = `${backendBaseUrl}/regions`;
+        console.log("GET", url);
+        axios.get(url).then( (response) => {
+            console.log("RESPONSE /regions", response.data);
+            if (response.data.status === 200) {
+                const regions = response.data.regions;
+                this.setState({regions});
+            } else {
+                this.alertError("REGIONS")
+            }
         });
     }
 
@@ -104,39 +129,48 @@ class App extends Component {
     }
 
     sendCampaign(giftId) {
-        axios.post(`${backendBaseUrl}/campaign`, {
+        const url = `${backendBaseUrl}/campaign`;
+        const body = {
             marketplace_gifts: [{
                 id: giftId,
                 "price_in_cents": parseInt(this.state.selectedGiftPrice, 10)
             }]
-        }).then((response) => {
-            alert("campaign has been sent!");
+        };
+        console.log("POST", url, body);
+        console.log("more parameters are appended by backend before being sent to giftbit");
+        axios.post(url, body).then((response) => {
+            console.log("RESPONSE /marketplace", response.data);
+            if (response.data.status === 200) {
+                alert("campaign has been sent!");
+            } else {
+                this.alertError("CAMPAIGN")
+            }
         })
     }
 
     handleRegionChange(event, index, value) {
-        this.setState({selectedRegion: value}, () => this.getVendors());
+        this.setState({selectedRegion: value}, () => this.getBrands());
     }
 
-    handleVendorSelect(selectedVendorId) {
-        this.setState({ selectedVendorId }, () => this.getMarketplaceGifts() );
+    handleBrandSelect(selectedBrandId) {
+        this.setState({ selectedBrandId }, () => this.getMarketplaceGifts() );
     }
 
     handlePaginationNext(){
-        const vendorsPagination = this.state.vendorsPagination;
-        const nextPageSizeExceedsTotalResults = Math.max(0, vendorsPagination.total - vendorsPagination.limit);
-        const nextPageWithinResults = vendorsPagination.offset + vendorsPagination.limit;
+        const brandsPagination = this.state.brandsPagination;
+        const nextPageSizeExceedsTotalResults = Math.max(0, brandsPagination.total - brandsPagination.limit);
+        const nextPageWithinResults = brandsPagination.offset + brandsPagination.limit;
 
-        vendorsPagination.offset  = Math.min(nextPageSizeExceedsTotalResults, nextPageWithinResults);
-        this.setState({ vendorsPagination }, () => this.getVendors());
+        brandsPagination.offset  = Math.min(nextPageSizeExceedsTotalResults, nextPageWithinResults);
+        this.setState({ brandsPagination }, () => this.getBrands());
     }
 
     handlePaginationPrev(){
-        const vendorsPagination = this.state.vendorsPagination;
-        const prevPageWithinResults = vendorsPagination.offset - vendorsPagination.limit;
+        const brandsPagination = this.state.brandsPagination;
+        const prevPageWithinResults = brandsPagination.offset - brandsPagination.limit;
 
-        vendorsPagination.offset = Math.max(0, prevPageWithinResults);
-        this.setState({ vendorsPagination }, () => this.getVendors());
+        brandsPagination.offset = Math.max(0, prevPageWithinResults);
+        this.setState({ brandsPagination }, () => this.getBrands());
     }
 
     handleInputChange(field, event) {
@@ -153,16 +187,19 @@ class App extends Component {
     }
 
     handleGiftsDialogClose(){
-        this.setState({gifts: [], selectedVendorId: null})
+        this.setState({gifts: [], selectedBrandId: null})
     }
 
+    isGiftInPriceRange(priceInCents) {
+        return (this.state.minPrice <= priceInCents) && (priceInCents <= this.state.maxPrice)
+    }
 
-    renderVendorList() {
+    renderBrandList() {
         return (
             <div className="Grid">
                 {
-                    this.state.vendors.map( (vendor) => {
-                        return <VendorCard vendor={vendor} onSelect={this.handleVendorSelect} key={vendor.id}/>
+                    this.state.brands.map( (brand) => {
+                        return <BrandCard brand={brand} onSelect={this.handleBrandSelect} key={brand.brand_code}/>
                     })
                 }
             </div>
@@ -182,31 +219,27 @@ class App extends Component {
                 </DropDownMenu>
                 <TextField
                     floatingLabelText="Min Price In Cents"
-                    onBlur={this.getVendors}
+                    onBlur={this.getBrands}
                     onChange={_.partial(this.handleInputChange, "minPrice")}
                     value={this.state.minPrice}
                     style={{width: 150}}
                 />
                 <TextField
                     floatingLabelText="Max Price In Cents"
-                    onBlur={this.getVendors}
+                    onBlur={this.getBrands}
                     onChange={_.partial(this.handleInputChange, "maxPrice")}
                     value={this.state.maxPrice}
                     style={{width: 150}}
                 />
                 <TextField
                     floatingLabelText="Search"
-                    onBlur={this.getVendors}
-                    onChange={_.partial(this.handleInputChange, "vendorSearch")}
-                    value={this.state.vendorSearch}
+                    onBlur={this.getBrands}
+                    onChange={_.partial(this.handleInputChange, "brandSearch")}
+                    value={this.state.brandSearch}
                 />
 
             </div>
         )
-    }
-
-    isGiftInPriceRange(priceInCents) {
-        return (this.state.minPrice <= priceInCents) && (priceInCents <= this.state.maxPrice)
     }
 
     renderGiftPriceOptions(gift){
@@ -273,7 +306,6 @@ class App extends Component {
     render() {
         return (
             <MuiThemeProvider>
-
                 <div className="App">
                     <header className="App-header">
                         <img src={logo} className="App-logo" alt="Logo" />
@@ -286,10 +318,10 @@ class App extends Component {
                             {this.renderParameterOptions()}
                         </div>
                         <div className="App-section">
-                            <h3>Vendors</h3>
+                            <h3>Brands</h3>
                             <hr/>
-                            <Pagination next={this.handlePaginationPrev} prev={this.handlePaginationNext} pagination={this.state.vendorsPagination}/>
-                            { this.renderVendorList() }
+                            <Pagination next={this.handlePaginationPrev} prev={this.handlePaginationNext} pagination={this.state.brandsPagination}/>
+                            { this.renderBrandList() }
                         </div>
                         {this.renderGiftsDialog()}
                     </div>

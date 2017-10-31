@@ -22,7 +22,7 @@ class Pagination extends Component {
         );
     }
     render() {
-        if (this.props.pagination.results !== null ) {
+        if (this.props.pagination.results ) {
             return this.renderPagination();
         }
         return <div></div>;
