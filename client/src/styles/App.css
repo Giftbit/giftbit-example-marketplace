@@ -26,9 +26,12 @@
   margin: 50px 0;
 }
 
-.Vendor-pagination {
+.Brand-pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+.Brand-pagination-centered {
+  display: flex;
   align-items: center;
 }
 .Grid {
@@ -66,6 +69,11 @@
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+}
+
+.State-debugging {
+  text-align: left;
+
 }
 
 

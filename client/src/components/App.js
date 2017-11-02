@@ -43,11 +43,11 @@ class App extends Component {
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handlePaginationNext = this.handlePaginationNext.bind(this);
         this.handlePaginationPrev = this.handlePaginationPrev.bind(this);
+        this.handlePaginationLimitChange = this.handlePaginationLimitChange.bind(this);
         this.handleBrandSelect = this.handleBrandSelect.bind(this);
         this.handleGiftsDialogClose = this.handleGiftsDialogClose.bind(this);
         this.handleSelectedGiftPriceChange = this.handleSelectedGiftPriceChange.bind(this);
         this.isGiftInPriceRange = this.isGiftInPriceRange.bind(this);
-
     }
 
     componentDidMount() {
@@ -173,6 +173,14 @@ class App extends Component {
         this.setState({ brandsPagination }, () => this.getBrands());
     }
 
+    handlePaginationLimitChange(event, index, value) {
+        const brandsPagination = this.state.brandsPagination;
+        brandsPagination.limit = value;
+        console.log(value);
+        this.setState({ brandsPagination }, () => this.getBrands());
+
+    }
+
     handleInputChange(field, event) {
         const stateToUpdate = {};
         stateToUpdate[field] = event.target.value;
@@ -181,9 +189,7 @@ class App extends Component {
 
     handleSelectedGiftPriceChange(event) {
         const selectedGiftPrice = event.target.value;
-        if (this.isGiftInPriceRange(selectedGiftPrice)) {
-            this.setState({ selectedGiftPrice });
-        }
+        this.setState({ selectedGiftPrice });
     }
 
     handleGiftsDialogClose(){
@@ -303,6 +309,14 @@ class App extends Component {
         )
     }
 
+    renderStateForDebugging() {
+        return (
+            <pre>
+                {JSON.stringify(this.state, null, 2)}
+            </pre>
+        )
+    }
+
     render() {
         return (
             <MuiThemeProvider>
@@ -320,10 +334,15 @@ class App extends Component {
                         <div className="App-section">
                             <h3>Brands</h3>
                             <hr/>
-                            <Pagination next={this.handlePaginationPrev} prev={this.handlePaginationNext} pagination={this.state.brandsPagination}/>
+                            <Pagination next={this.handlePaginationPrev} prev={this.handlePaginationNext} changeLimit={this.handlePaginationLimitChange} pagination={this.state.brandsPagination}/>
                             { this.renderBrandList() }
                         </div>
                         {this.renderGiftsDialog()}
+                        <div className="App-section State-debugging"> {/* comment this out to remove state on screen */}
+                            <h3>Current React State (for debugging)</h3>
+                            <hr/>
+                            {this.renderStateForDebugging()}
+                        </div>
                     </div>
 
                 </div>
