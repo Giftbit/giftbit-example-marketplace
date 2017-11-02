@@ -8,8 +8,10 @@
     - put in a template ID (may need to create on at giftbit.com first)
  - Start the server before the client
     - cd server
+    - npm install
     - npm run start
  - Start the client
     - cd client
+    - npm install
     - npm run start
     

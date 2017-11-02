@@ -23,11 +23,11 @@ class App extends Component {
         selectedRegion: 2,
         regions: [],
         minPrice: 0,
-        maxPrice: 1000,
+        maxPrice: 10000,
         brandSearch: "",
         brands: [],
         selectedBrandId: null,
-        brandsPagination: { limit: 10, offset: 0 },
+        brandsPagination: { limit: 4, offset: 0 },
         gifts: [],
         selectedGiftPrice: 0
     };
@@ -73,7 +73,7 @@ class App extends Component {
         console.log("GET", url);
         axios.get(url).then( (response) => {
             console.log("RESPONSE /brands", response.data);
-            if (response.data.status === 200) {
+            if (!response.data.error) {
                 const brands = response.data.brands;
                 const brandsPagination = {};
                 brandsPagination.total = response.data.total_count;
@@ -101,7 +101,7 @@ class App extends Component {
             console.log("GET", url);
             axios.get(url).then( (response) => {
                 console.log("RESPONSE /marketplaceGifts", response.data);
-                if (response.data.status === 200) {
+                if (!response.data.error) {
                     this.setState({ gifts: response.data.marketplace_gifts });
                 } else {
                     this.alertError("MARKETPLACEGIFTS")
@@ -115,7 +115,7 @@ class App extends Component {
         console.log("GET", url);
         axios.get(url).then( (response) => {
             console.log("RESPONSE /regions", response.data);
-            if (response.data.status === 200) {
+            if (!response.data.error) {
                 const regions = response.data.regions;
                 this.setState({regions});
             } else {
@@ -140,7 +140,7 @@ class App extends Component {
         console.log("more parameters are appended by backend before being sent to giftbit");
         axios.post(url, body).then((response) => {
             console.log("RESPONSE /marketplace", response.data);
-            if (response.data.status === 200) {
+            if (!response.data.error) {
                 alert("campaign has been sent!");
             } else {
                 this.alertError("CAMPAIGN")

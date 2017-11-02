@@ -3,12 +3,8 @@ const router = express.Router();
 const giftbitApiService = require('../services/giftbitApiService');
 
 router.get('/', function(req, res, next) {
-    giftbitApiService.getBrands(req)
-        .then(function(response) {
-            res.json(response.data)
-        })
-        .catch(function(error) {
-            res.json(error.response.data)
+    return giftbitApiService.getBrands(req).then(function(responseData) {
+            res.json(responseData)
         })
 });
 
