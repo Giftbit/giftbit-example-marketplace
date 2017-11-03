@@ -1,11 +1,13 @@
 # Interactive Marketplace Example
 
 ## Getting Started
+ - [sign up](https://testbedapp.giftbit.com/register/registerGiver) for a Giftbit testbed account
  - Install Node.js https://nodejs.org/en/
- - Open 2 separate terminals
+ - Clone or download the repo
+ - Open 2 separate terminals and navigate to the project root in both
  - Configure the server first
     - Open server/config.js
-    - Put in your token (without the `Bearer` prefix)
+    - Put in your testbed API token ([found here](https://testbedapp.giftbit.com/userAccountManagement/apiKeyManagement))
     - Put in a template ID ([create one here](https://testbedapp.giftbit.com/giftTemplate/list))
  - Start the server before the client
     - IMPORTANT! the server must be started first so the client can proxy to the correct address
@@ -22,19 +24,15 @@
         - npm run start
     - Logs for server requests and responses will be found in your browser console
     
+## Logs
+Both the Server and Client log requests and responses. In some cases, the server will add extra information before calling Giftbit, so it is recommended to watch the server logs to understand the exact Giftbit requests and responses
+ 
 ## Server
 config.js
- - Contains your Giftbit API key and email template ID. Your production key should be kept in a secure location.
+ - Contains your Giftbit testbed API key and email template ID. 
+ - This form of storing your API key is not recommended for production. Checkout [this article](http://blog.giftbit.com/how-to-securely-manage-system-configuration-using-aws) for a better approach
  
- app.js
- - Where routes are declared. From here, you can follow any path the server will respond to
- - If you want to see requests made to this server, uncomment line 13.
-    - Example: `GET /brands?limit=4&region=2= 304 1106.435 ms - -`
- 
- /routes
- - Holds all of the controllers. In this example, all controllers are very simple
- 
- /services
+/services
  - giftbitApiService.js
     - Contains the logic for querying Giftbits API
  - giftbitHttpService.js
@@ -50,13 +48,11 @@ src/components/App.js
         - getMarketplaceGifts()
         - getRegions()
         - sendCampaign()
-    - These functions send information to the local server
+    - These are the functions that send information to the local server
+        - viewing these functions will help you understand what react state is used to query Giftbit
         - for all GET requests, the server will simply pass the query parameters to Giftbit, and return the response.
         - for the POST request to /campaign, the server will add some extra information to the body. Therefore it is important view the server logs for seeing what exactly is being sent to Giftbit
         
-## Logs
-Both the Server and Client log requests and responses. In some cases, the server will add extra information before calling Giftbit, so it is recommended to watch the server logs to understand the exact Giftbit requests and responses
-
 ## Bugs, Improvements, and Suggestions
 If you find something that can make the app better, or easier to understand, let us know!
  - You can create an [issue](https://github.com/Giftbit/giftbit-example-marketplace/issues) to start a discussion
