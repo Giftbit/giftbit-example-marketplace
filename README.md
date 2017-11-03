@@ -1,8 +1,8 @@
 # Interactive Marketplace Example
 
 ## Getting Started
- - [sign up](https://testbedapp.giftbit.com/register/registerGiver) for a Giftbit testbed account
- - Install Node.js https://nodejs.org/en/
+ - [Sign up](https://testbedapp.giftbit.com/register/registerGiver) for a Giftbit testbed account
+ - Install (Node.js)[https://nodejs.org/en/]
  - Clone or download the repo
  - Open 2 separate terminals and navigate to the project root in both
  - Configure the server first
@@ -48,7 +48,7 @@ src/components/App.js
         - getMarketplaceGifts()
         - getRegions()
         - sendCampaign()
-    - These are the functions that send information to the local server
+    - These functions are the most important because that send information to the local server
         - viewing these functions will help you understand what react state is used to query Giftbit
         - for all GET requests, the server will simply pass the query parameters to Giftbit, and return the response.
         - for the POST request to /campaign, the server will add some extra information to the body. Therefore it is important view the server logs for seeing what exactly is being sent to Giftbit
