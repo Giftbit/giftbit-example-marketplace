@@ -17,6 +17,7 @@ import BrandCard from './BrandCard';
 import '../styles/App.css';
 
 const backendBaseUrl = 'http://localhost:3000';
+const redemptionOptions = {EMBEDDED: 1, EMAIL: 2};
 
 class App extends Component {
     state = {
@@ -29,7 +30,9 @@ class App extends Component {
         selectedBrandId: null,
         brandsPagination: { limit: 4, offset: 0 },
         gifts: [],
-        selectedGiftPrice: 0
+        selectedGiftPrice: 0,
+        redemptionOption: redemptionOptions.EMBEDDED,
+        embeddedGiftLink: null
     };
 
     constructor(props) {
@@ -38,14 +41,17 @@ class App extends Component {
         this.getRegions = this.getRegions.bind(this);
         this.getMarketplaceGifts = this.getMarketplaceGifts.bind(this);
         this.sendCampaign = this.sendCampaign.bind(this);
+        this.sendEmbeddedCampaign = this.sendEmbeddedCampaign.bind(this);
         this.setGiftPriceAndSendCampaign = this.setGiftPriceAndSendCampaign.bind(this);
         this.handleRegionChange = this.handleRegionChange.bind(this);
+        this.handleRedemptionOptionChange = this.handleRedemptionOptionChange.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handlePaginationNext = this.handlePaginationNext.bind(this);
         this.handlePaginationPrev = this.handlePaginationPrev.bind(this);
         this.handlePaginationLimitChange = this.handlePaginationLimitChange.bind(this);
         this.handleBrandSelect = this.handleBrandSelect.bind(this);
         this.handleGiftsDialogClose = this.handleGiftsDialogClose.bind(this);
+        this.handleEmbeddedRedemptionDialogClose = this.handleEmbeddedRedemptionDialogClose.bind(this);
         this.handleSelectedGiftPriceChange = this.handleSelectedGiftPriceChange.bind(this);
         this.isGiftInPriceRange = this.isGiftInPriceRange.bind(this);
     }
@@ -57,6 +63,10 @@ class App extends Component {
 
     alertError(endpoint){
         alert(`${endpoint} ERROR! check console to see giftbit's response`)
+    }
+
+    isErrorResponse(response) {
+        return response.data.error || response.data.status >= 400
     }
 
     getBrands() {
@@ -101,7 +111,7 @@ class App extends Component {
             console.log("GET", url);
             axios.get(url).then( (response) => {
                 console.log("RESPONSE /marketplaceGifts", response.data);
-                if (!response.data.error) {
+                if (!this.isErrorResponse(response)) {
                     this.setState({ gifts: response.data.marketplace_gifts });
                 } else {
                     this.alertError("MARKETPLACEGIFTS")
@@ -115,7 +125,7 @@ class App extends Component {
         console.log("GET", url);
         axios.get(url).then( (response) => {
             console.log("RESPONSE /regions", response.data);
-            if (!response.data.error) {
+            if (!this.isErrorResponse(response)) {
                 const regions = response.data.regions;
                 this.setState({regions});
             } else {
@@ -129,27 +139,53 @@ class App extends Component {
     }
 
     sendCampaign(giftId) {
-        const url = `${backendBaseUrl}/campaign`;
+        this.handleGiftsDialogClose()
+        if (this.state.redemptionOption === redemptionOptions.EMBEDDED) {
+            this.sendEmbeddedCampaign(giftId)
+        } else {
+            const url = `${backendBaseUrl}/campaign`;
+            const body = {
+                marketplace_gifts: [{
+                    id: giftId,
+                    "price_in_cents": parseInt(this.state.selectedGiftPrice, 10)
+                }]
+            };
+            console.log("POST", url, body);
+            console.log("more parameters are appended by backend before being sent to giftbit");
+            axios.post(url, body).then((response) => {
+                console.log("RESPONSE /marketplace", response.data);
+                if (!this.isErrorResponse(response)) {
+                    alert("campaign has been sent!");
+                } else {
+                    this.alertError("CAMPAIGN")
+                }
+            })
+        }
+    }
+
+    sendEmbeddedCampaign(giftId) {
+        const url = `${backendBaseUrl}/embedded`;
         const body = {
-            marketplace_gifts: [{
-                id: giftId,
-                "price_in_cents": parseInt(this.state.selectedGiftPrice, 10)
-            }]
+            marketplace_gift: {id: giftId, "price_in_cents": parseInt(this.state.selectedGiftPrice, 10)}
         };
         console.log("POST", url, body);
-        console.log("more parameters are appended by backend before being sent to giftbit");
         axios.post(url, body).then((response) => {
-            console.log("RESPONSE /marketplace", response.data);
-            if (!response.data.error) {
-                alert("campaign has been sent!");
+            console.log("RESPONSE /embedded", response.data);
+            if (!this.isErrorResponse(response)) {
+                const embeddedGiftLink = response.data.gift_link;
+                this.setState({embeddedGiftLink});
             } else {
-                this.alertError("CAMPAIGN")
+                this.alertError("EMBEDDED")
             }
         })
     }
 
     handleRegionChange(event, index, value) {
         this.setState({selectedRegion: value}, () => this.getBrands());
+    }
+
+    handleRedemptionOptionChange(event, index, value) {
+        this.setState({redemptionOption: value});
     }
 
     handleBrandSelect(selectedBrandId) {
@@ -196,6 +232,10 @@ class App extends Component {
         this.setState({gifts: [], selectedBrandId: null})
     }
 
+    handleEmbeddedRedemptionDialogClose(){
+        this.setState({embeddedGiftLink: null})
+    }
+
     isGiftInPriceRange(priceInCents) {
         return (this.state.minPrice <= priceInCents) && (priceInCents <= this.state.maxPrice)
     }
@@ -216,6 +256,10 @@ class App extends Component {
     renderParameterOptions() {
         return (
             <div className="Parameters">
+                <DropDownMenu value={this.state.redemptionOption} onChange={this.handleRedemptionOptionChange} style={{width: 240}}>
+                    <MenuItem value={redemptionOptions.EMBEDDED} primaryText="Embedded Redemption"/>
+                    <MenuItem value={redemptionOptions.EMAIL} primaryText="Email Redemption"/>
+                </DropDownMenu>
                 <DropDownMenu value={this.state.selectedRegion} onChange={this.handleRegionChange} style={{width: 150}}>
                     {this.state.regions.map( (region) => {
                         return (
@@ -296,7 +340,7 @@ class App extends Component {
                                     </div>
                                     <h4>{gift.name}</h4>
                                     <hr/>
-                                    Select Gift In Cents
+                                    Select Gift In Cents`
                                     <div className="Grid">
                                         {this.renderGiftPriceOptions(gift)}
                                     </div>
@@ -304,6 +348,21 @@ class App extends Component {
                             )
                         })
                     }
+                </div>
+            </Dialog>
+        )
+    }
+
+    renderEmbeddedRedemptionDialog(){
+        return (
+            <Dialog
+                title="Your Gift"
+                open={this.state.embeddedGiftLink !== null}
+                onRequestClose={this.handleEmbeddedRedemptionDialogClose}
+                autoScrollBodyContent={true}
+            >
+                <div className="Centered">
+                    <iframe src={this.state.embeddedGiftLink} width="400" height="550" title="embedded redemption"/>
                 </div>
             </Dialog>
         )
@@ -338,6 +397,7 @@ class App extends Component {
                             { this.renderBrandList() }
                         </div>
                         {this.renderGiftsDialog()}
+                        {this.renderEmbeddedRedemptionDialog()}
                         <div className="App-section State-debugging"> {/* comment this out to remove state on screen */}
                             <h3>Current React State (for debugging)</h3>
                             <hr/>

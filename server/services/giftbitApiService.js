@@ -38,4 +38,14 @@ const createCampaign = function(req) {
     return giftbitHttpService.postRequest('campaign', body);
 };
 
-module.exports = {getBrands, getGifts, getRegions, createCampaign};
+const createEmbeddedCampaign = function(req) {
+    const body = {
+        marketplace_gift: req.body.marketplace_gift,
+        id: Math.random().toString(36).substring(2)
+    };
+
+    return giftbitHttpService.postRequest('embedded', body);
+
+}
+
+module.exports = {getBrands, getGifts, getRegions, createCampaign, createEmbeddedCampaign};

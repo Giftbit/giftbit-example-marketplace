@@ -7,6 +7,7 @@ const brands = require('./routes/brands');
 const marketplaceGifts = require('./routes/marketplaceGifts');
 const regions = require('./routes/regions');
 const campaign = require('./routes/campaign');
+const embedded = require('./routes/embedded');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/brands', brands);
 app.use('/marketplaceGifts', marketplaceGifts);
 app.use('/regions', regions);
 app.use('/campaign', campaign);
+app.use('/embedded', embedded);
 
 app.listen(port);
 console.log('listening on port ' + port);
