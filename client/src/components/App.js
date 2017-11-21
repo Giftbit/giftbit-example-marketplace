@@ -139,7 +139,6 @@ class App extends Component {
     }
 
     sendCampaign(giftId) {
-        this.handleGiftsDialogClose()
         if (this.state.redemptionOption === redemptionOptions.EMBEDDED) {
             this.sendEmbeddedCampaign(giftId)
         } else {
@@ -161,6 +160,7 @@ class App extends Component {
                 }
             })
         }
+        this.handleGiftsDialogClose();
     }
 
     sendEmbeddedCampaign(giftId) {
@@ -353,19 +353,20 @@ class App extends Component {
         )
     }
 
-    renderEmbeddedRedemptionDialog(){
-        return (
-            <Dialog
-                title="Your Gift"
-                open={this.state.embeddedGiftLink !== null}
-                onRequestClose={this.handleEmbeddedRedemptionDialogClose}
-                autoScrollBodyContent={true}
-            >
-                <div className="Centered">
-                    <iframe src={this.state.embeddedGiftLink} width="400" height="550" title="embedded redemption"/>
+    renderEmbeddedRedemption(){
+        if (this.state.embeddedGiftLink) {
+            return (
+                <div className="App-section">
+                    <h3>Embedded Redemption</h3>
+                    <hr/>
+                    <div className="Centered">
+                        <iframe src={this.state.embeddedGiftLink} width="310" height="450" title="embedded redemption"/>
+                    </div>
                 </div>
-            </Dialog>
-        )
+            )
+        } else {
+            return <div></div>
+        }
     }
 
     renderStateForDebugging() {
@@ -390,6 +391,9 @@ class App extends Component {
                             <hr/>
                             {this.renderParameterOptions()}
                         </div>
+
+                        {this.renderEmbeddedRedemption()}
+
                         <div className="App-section">
                             <h3>Brands</h3>
                             <hr/>
@@ -397,7 +401,6 @@ class App extends Component {
                             { this.renderBrandList() }
                         </div>
                         {this.renderGiftsDialog()}
-                        {this.renderEmbeddedRedemptionDialog()}
                         <div className="App-section State-debugging"> {/* comment this out to remove state on screen */}
                             <h3>Current React State (for debugging)</h3>
                             <hr/>
