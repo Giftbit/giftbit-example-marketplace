@@ -8,4 +8,10 @@ router.get('/', function(req, res, next) {
         })
 });
 
+router.get('/:brandCode', function(req, res, next) {
+    return giftbitApiService.getBrand(req).then(function(responseData) {
+        res.json(responseData)
+    })
+});
+
 module.exports = router;
