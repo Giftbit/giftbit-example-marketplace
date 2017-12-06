@@ -3,8 +3,7 @@ const queryString = require('query-string');
 const senderConfig = require('../config');
 
 const headerConfig = { headers: {'Authorization': 'Bearer ' + senderConfig.token} };
-// const baseUrl = 'https://testbedapp.giftbit.com/papi/v1/';
-const baseUrl = 'https://preprodapp.giftbit.com/papi/v1/';
+const baseUrl = 'https://testbedapp.giftbit.com/papi/v1/';
 
 const getLogger = function(endpoint, request, response, status) {
     console.log("---", "Giftbit GET", endpoint, "request", "---");
