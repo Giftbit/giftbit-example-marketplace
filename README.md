@@ -45,7 +45,7 @@ src/components/App.js
  - A lot of the code here is more about React than Giftbit
     - Important functions for Giftbit are
         - getBrands()
-        - getMarketplaceGifts()
+        - getBrandDetail()
         - getRegions()
         - sendCampaign()
         - sendEmbeddedCampaign()
