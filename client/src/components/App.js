@@ -146,7 +146,7 @@ class App extends Component {
             console.log("POST", url, body);
             console.log("more parameters are appended by backend before being sent to giftbit");
             axios.post(url, body).then((response) => {
-                console.log("RESPONSE /marketplace", response.data);
+                console.log("RESPONSE /campaign", response.data);
                 if (!this.isErrorResponse(response)) {
                     alert("campaign has been sent!");
                 } else {
@@ -169,6 +169,7 @@ class App extends Component {
             if (!this.isErrorResponse(response)) {
                 const embeddedGiftLink = response.data.gift_link;
                 this.setState({embeddedGiftLink});
+                localStorage.setItem(new Date().getTime().toString(), embeddedGiftLink)
             } else {
                 this.alertError("EMBEDDED")
             }
