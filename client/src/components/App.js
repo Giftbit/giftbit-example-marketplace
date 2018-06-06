@@ -79,7 +79,7 @@ class App extends Component {
             offset: this.state.brandsPagination.offset
         };
         if (this.state.redemptionOption === redemptionOptions.EMBEDDED) {
-            brandParams.inapp_available = true
+            brandParams.embeddable = true
         }
         const queryParams = queryString.stringify(brandParams);
         const url = `${backendBaseUrl}/brands?${queryParams}`;
@@ -177,11 +177,11 @@ class App extends Component {
     }
 
     handleRegionChange(event, index, value) {
-        this.setState({selectedRegion: value}, () => this.getBrands());
+        this.setState({selectedRegion: value, brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}}, () => this.getBrands());
     }
 
     handleRedemptionOptionChange(event, index, value) {
-        this.setState({redemptionOption: value}, () => this.getBrands());
+        this.setState({redemptionOption: value, brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}}, () => this.getBrands());
     }
 
     handleBrandSelect(selectedBrandId) {
@@ -214,7 +214,7 @@ class App extends Component {
     }
 
     handleInputChange(field, event) {
-        const stateToUpdate = {};
+        const stateToUpdate = {brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}};
         stateToUpdate[field] = event.target.value;
         this.setState(stateToUpdate);
     }
