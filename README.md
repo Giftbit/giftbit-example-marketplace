@@ -7,7 +7,7 @@
  - Open 2 separate terminals and navigate to the project root in both
  - Configure the server first
     - Open server/config.js
-    - Put in your testbed API token ([found here](https://testbedapp.giftbit.com/userAccountManagement/apiKeyManagement))
+    - Put in your testbed API token ([create one here](https://testbedapp.giftbit.com/userAccountManagement/apiKeyManagement))
     - Put in a template ID ([create one here](https://testbedapp.giftbit.com/giftTemplate/list))
  - Start the server before the client
     - IMPORTANT! the server must be started first so the client can proxy to the correct address
