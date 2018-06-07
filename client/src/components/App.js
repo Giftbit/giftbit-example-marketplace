@@ -31,7 +31,7 @@ class App extends Component {
         brandsPagination: { limit: 4, offset: 0 },
         brandDetail: null,
         selectedGiftPrice: 0,
-        redemptionOption: redemptionOptions.EMBEDDED,
+        redemptionOption: redemptionOptions.EMAIL,
         embeddedGiftLink: null
     };
 
