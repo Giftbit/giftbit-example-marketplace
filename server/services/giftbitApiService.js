@@ -15,8 +15,8 @@ const getBrands = function(req) {
     return giftbitHttpService.getRequest('brands', req.query)
 };
 
-const getGifts = function(req) {
-    return giftbitHttpService.getRequest('marketplace', req.query);
+const getBrand = function(req) {
+    return giftbitHttpService.getRequest('brands/'+req.params.brandCode, req.query)
 };
 
 const getRegions = function(req) {
@@ -30,7 +30,8 @@ const createCampaign = function(req) {
         gift_template: senderConfig.giftTemplate,
         delivery_type: 'GIFTBIT_EMAIL',
         contacts: [{email: 'demo@giftbit.com'}], /* all emails are redirected to your email in testbed */
-        marketplace_gifts: req.body.marketplace_gifts,
+        brand_codes: req.body.brand_codes,
+        price_in_cents: req.body.price_in_cents,
         expiry: expiryDate.yyyymmdd(),
         id: Math.random().toString(36).substring(2)
     };
@@ -38,4 +39,15 @@ const createCampaign = function(req) {
     return giftbitHttpService.postRequest('campaign', body);
 };
 
-module.exports = {getBrands, getGifts, getRegions, createCampaign};
+const createEmbeddedCampaign = function(req) {
+    const body = {
+        brand_code: req.body.brand_code,
+        price_in_cents: req.body.price_in_cents,
+        id: Math.random().toString(36).substring(2)
+    };
+
+    return giftbitHttpService.postRequest('embedded', body);
+
+}
+
+module.exports = {getBrands, getBrand, getRegions, createCampaign, createEmbeddedCampaign};

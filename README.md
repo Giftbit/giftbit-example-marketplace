@@ -7,7 +7,7 @@
  - Open 2 separate terminals and navigate to the project root in both
  - Configure the server first
     - Open server/config.js
-    - Put in your testbed API token ([found here](https://testbedapp.giftbit.com/userAccountManagement/apiKeyManagement))
+    - Put in your testbed API token ([create one here](https://testbedapp.giftbit.com/userAccountManagement/apiKeyManagement))
     - Put in a template ID ([create one here](https://testbedapp.giftbit.com/giftTemplate/list))
  - Start the server before the client
     - IMPORTANT! the server must be started first so the client can proxy to the correct address
@@ -45,14 +45,16 @@ src/components/App.js
  - A lot of the code here is more about React than Giftbit
     - Important functions for Giftbit are
         - getBrands()
-        - getMarketplaceGifts()
+        - getBrandDetail()
         - getRegions()
         - sendCampaign()
+        - sendEmbeddedCampaign()
     - These functions are the most important because they send information to the local server
         - viewing these functions will help you understand what react state is used to query Giftbit
         - for all GET requests, the server will simply pass the query parameters to Giftbit, and return the response.
         - for the POST request to /campaign, the server will add some extra information to the body. Therefore it is important to view the server logs for seeing what exactly is being sent to Giftbit
-        
+ - render() is the main function
+    - this function is run automatically, and can be traced through to understand the generated HTML
 ## Bugs, Improvements, and Suggestions
 If you find something that can make the app better, or easier to understand, let us know!
  - You can create an [issue](https://github.com/Giftbit/giftbit-example-marketplace/issues) to start a discussion

@@ -17,6 +17,7 @@ import BrandCard from './BrandCard';
 import '../styles/App.css';
 
 const backendBaseUrl = 'http://localhost:3000';
+const redemptionOptions = {EMBEDDED: 1, EMAIL: 2};
 
 class App extends Component {
     state = {
@@ -28,24 +29,29 @@ class App extends Component {
         brands: [],
         selectedBrandId: null,
         brandsPagination: { limit: 4, offset: 0 },
-        gifts: [],
-        selectedGiftPrice: 0
+        brandDetail: null,
+        selectedGiftPrice: 0,
+        redemptionOption: redemptionOptions.EMAIL,
+        embeddedGiftLink: null
     };
 
     constructor(props) {
         super(props);
         this.getBrands = this.getBrands.bind(this);
         this.getRegions = this.getRegions.bind(this);
-        this.getMarketplaceGifts = this.getMarketplaceGifts.bind(this);
+        this.getBrandDetail = this.getBrandDetail.bind(this);
         this.sendCampaign = this.sendCampaign.bind(this);
-        this.setGiftPriceAndSendCampaign = this.setGiftPriceAndSendCampaign.bind(this);
+        this.sendEmbeddedCampaign = this.sendEmbeddedCampaign.bind(this);
+        this.setPriceAndSendCampaign = this.setPriceAndSendCampaign.bind(this);
         this.handleRegionChange = this.handleRegionChange.bind(this);
+        this.handleRedemptionOptionChange = this.handleRedemptionOptionChange.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handlePaginationNext = this.handlePaginationNext.bind(this);
         this.handlePaginationPrev = this.handlePaginationPrev.bind(this);
         this.handlePaginationLimitChange = this.handlePaginationLimitChange.bind(this);
         this.handleBrandSelect = this.handleBrandSelect.bind(this);
-        this.handleGiftsDialogClose = this.handleGiftsDialogClose.bind(this);
+        this.handleBrandDetailDialogClose = this.handleBrandDetailDialogClose.bind(this);
+        this.handleEmbeddedRedemptionDialogClose = this.handleEmbeddedRedemptionDialogClose.bind(this);
         this.handleSelectedGiftPriceChange = this.handleSelectedGiftPriceChange.bind(this);
         this.isGiftInPriceRange = this.isGiftInPriceRange.bind(this);
     }
@@ -59,6 +65,10 @@ class App extends Component {
         alert(`${endpoint} ERROR! check console to see giftbit's response`)
     }
 
+    isErrorResponse(response) {
+        return response.data.error || response.data.status >= 400
+    }
+
     getBrands() {
         const brandParams = {
             region: this.state.selectedRegion,
@@ -68,6 +78,9 @@ class App extends Component {
             limit: this.state.brandsPagination.limit,
             offset: this.state.brandsPagination.offset
         };
+        if (this.state.redemptionOption === redemptionOptions.EMBEDDED) {
+            brandParams.embeddable = true
+        }
         const queryParams = queryString.stringify(brandParams);
         const url = `${backendBaseUrl}/brands?${queryParams}`;
         console.log("GET", url);
@@ -88,23 +101,16 @@ class App extends Component {
         });
     }
 
-    getMarketplaceGifts() {
+    getBrandDetail() {
         if (this.state.selectedBrandId) {
-            const brandParams = {
-                region: this.state.selectedRegion,
-                min_price_in_cents: this.state.minPrice,
-                max_price_in_cents: this.state.maxPrice,
-                brand: this.state.selectedBrandId
-            };
-            const queryParams = queryString.stringify(brandParams);
-            const url = `${backendBaseUrl}/marketplaceGifts?${queryParams}`;
+            const url = `${backendBaseUrl}/brands/${this.state.selectedBrandId}`;
             console.log("GET", url);
             axios.get(url).then( (response) => {
-                console.log("RESPONSE /marketplaceGifts", response.data);
-                if (!response.data.error) {
-                    this.setState({ gifts: response.data.marketplace_gifts });
+                console.log(`RESPONSE /brands/${this.state.selectedBrandId}`, response.data);
+                if (!this.isErrorResponse(response)) {
+                    this.setState({ brandDetail: response.data.brand });
                 } else {
-                    this.alertError("MARKETPLACEGIFTS")
+                    this.alertError(`/brands/${this.state.selectedBrandId}`)
                 }
             });
         }
@@ -115,7 +121,7 @@ class App extends Component {
         console.log("GET", url);
         axios.get(url).then( (response) => {
             console.log("RESPONSE /regions", response.data);
-            if (!response.data.error) {
+            if (!this.isErrorResponse(response)) {
                 const regions = response.data.regions;
                 this.setState({regions});
             } else {
@@ -124,36 +130,62 @@ class App extends Component {
         });
     }
 
-    setGiftPriceAndSendCampaign(selectedGiftPrice, giftId) {
-        this.setState({ selectedGiftPrice }, () => this.sendCampaign(giftId))
+    setPriceAndSendCampaign(selectedGiftPrice) {
+        this.setState({ selectedGiftPrice }, () => this.sendCampaign())
     }
 
-    sendCampaign(giftId) {
-        const url = `${backendBaseUrl}/campaign`;
+    sendCampaign() {
+        if (this.state.redemptionOption === redemptionOptions.EMBEDDED) {
+            this.sendEmbeddedCampaign()
+        } else {
+            const url = `${backendBaseUrl}/campaign`;
+            const body = {
+                brand_codes: [this.state.brandDetail.brand_code],
+                price_in_cents: parseInt(this.state.selectedGiftPrice, 10)
+            };
+            console.log("POST", url, body);
+            console.log("more parameters are appended by backend before being sent to giftbit");
+            axios.post(url, body).then((response) => {
+                console.log("RESPONSE /campaign", response.data);
+                if (!this.isErrorResponse(response)) {
+                    alert("campaign has been sent!");
+                } else {
+                    this.alertError("CAMPAIGN")
+                }
+            })
+        }
+        this.handleBrandDetailDialogClose();
+    }
+
+    sendEmbeddedCampaign() {
+        const url = `${backendBaseUrl}/embedded`;
         const body = {
-            marketplace_gifts: [{
-                id: giftId,
-                "price_in_cents": parseInt(this.state.selectedGiftPrice, 10)
-            }]
+            brand_code: this.state.brandDetail.brand_code,
+            price_in_cents: parseInt(this.state.selectedGiftPrice, 10)
         };
         console.log("POST", url, body);
-        console.log("more parameters are appended by backend before being sent to giftbit");
         axios.post(url, body).then((response) => {
-            console.log("RESPONSE /marketplace", response.data);
-            if (!response.data.error) {
-                alert("campaign has been sent!");
+            console.log("RESPONSE /embedded", response.data);
+            if (!this.isErrorResponse(response)) {
+                const embeddedGiftLink = response.data.gift_link;
+                this.setState({embeddedGiftLink});
+                localStorage.setItem(new Date().getTime().toString(), embeddedGiftLink)
             } else {
-                this.alertError("CAMPAIGN")
+                this.alertError("EMBEDDED")
             }
         })
     }
 
     handleRegionChange(event, index, value) {
-        this.setState({selectedRegion: value}, () => this.getBrands());
+        this.setState({selectedRegion: value, brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}}, () => this.getBrands());
+    }
+
+    handleRedemptionOptionChange(event, index, value) {
+        this.setState({redemptionOption: value, brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}}, () => this.getBrands());
     }
 
     handleBrandSelect(selectedBrandId) {
-        this.setState({ selectedBrandId }, () => this.getMarketplaceGifts() );
+        this.setState({ selectedBrandId }, () => this.getBrandDetail() );
     }
 
     handlePaginationNext(){
@@ -182,7 +214,7 @@ class App extends Component {
     }
 
     handleInputChange(field, event) {
-        const stateToUpdate = {};
+        const stateToUpdate = {brandsPagination: {offset: 0, limit: this.state.brandsPagination.limit}};
         stateToUpdate[field] = event.target.value;
         this.setState(stateToUpdate);
     }
@@ -192,8 +224,12 @@ class App extends Component {
         this.setState({ selectedGiftPrice });
     }
 
-    handleGiftsDialogClose(){
-        this.setState({gifts: [], selectedBrandId: null})
+    handleBrandDetailDialogClose(){
+        this.setState({brandDetail: null, selectedBrandId: null})
+    }
+
+    handleEmbeddedRedemptionDialogClose(){
+        this.setState({embeddedGiftLink: null})
     }
 
     isGiftInPriceRange(priceInCents) {
@@ -216,6 +252,10 @@ class App extends Component {
     renderParameterOptions() {
         return (
             <div className="Parameters">
+                <DropDownMenu value={this.state.redemptionOption} onChange={this.handleRedemptionOptionChange} style={{width: 240}}>
+                    <MenuItem value={redemptionOptions.EMBEDDED} primaryText="Embedded Redemption"/>
+                    <MenuItem value={redemptionOptions.EMAIL} primaryText="Email Redemption"/>
+                </DropDownMenu>
                 <DropDownMenu value={this.state.selectedRegion} onChange={this.handleRegionChange} style={{width: 150}}>
                     {this.state.regions.map( (region) => {
                         return (
@@ -248,65 +288,78 @@ class App extends Component {
         )
     }
 
-    renderGiftPriceOptions(gift){
+    renderBrandPriceOptions(brand){
         const buttonStyle = {margin: 12};
-        if (gift.prices_in_cents) {
+        if (brand.variable_price) {
             return (
                 <div>
-                    {
-                        gift.prices_in_cents
-                            .filter(this.isGiftInPriceRange)
-                            .map( (priceInCents, index) => {
-                                return <RaisedButton key={index} label={priceInCents} style={buttonStyle} onClick={_.partial(this.setGiftPriceAndSendCampaign, priceInCents, gift.id)}/>
-                            })
-                    }
+                    <TextField
+                        floatingLabelText={`${brand.min_price_in_cents} - ${Math.min(brand.max_price_in_cents, this.state.maxPrice)}`}
+                        onChange={this.handleSelectedGiftPriceChange}
+                        value={this.state.selectedGiftPrice}
+                        style={{width: 100}}
+                    />
+                    <FlatButton label="Send Gift" style={buttonStyle} onClick={this.sendCampaign}/>
                 </div>
             )
         }
         else {
             return (
                 <div>
-                    <TextField
-                        floatingLabelText={`${gift.min_price_in_cents} - ${Math.min(gift.max_price_in_cents, this.state.maxPrice)}`}
-                        onChange={this.handleSelectedGiftPriceChange}
-                        value={this.state.selectedGiftPrice}
-                        style={{width: 100}}
-                    />
-                    <FlatButton label="Send Gift" style={buttonStyle} onClick={_.partial(this.sendCampaign, gift.id)}/>
+                    {
+                        brand.allowed_prices_in_cents
+                            .filter(this.isGiftInPriceRange)
+                            .map( (priceInCents, index) => {
+                                return <RaisedButton key={index} label={priceInCents} style={buttonStyle} onClick={_.partial(this.setPriceAndSendCampaign, priceInCents)}/>
+                            })
+                    }
                 </div>
             )
         }
     }
 
-    renderGiftsDialog(){
-        return (
-            <Dialog
-                title="Select a Gift"
-                open={this.state.gifts.length > 0}
-                onRequestClose={this.handleGiftsDialogClose}
-                autoScrollBodyContent={true}
-            >
-                <div className="Grid">
-                    {
-                        this.state.gifts.map( (gift) => {
-                            return (
-                                <div className="Card Wide" key={gift.id}>
-                                    <div className="Brand-image-wrapper">
-                                        <img className="Brand-image"  src={gift.image_url} alt="Brand"/>
-                                    </div>
-                                    <h4>{gift.name}</h4>
-                                    <hr/>
-                                    Select Gift In Cents
-                                    <div className="Grid">
-                                        {this.renderGiftPriceOptions(gift)}
-                                    </div>
-                                </div>
-                            )
-                        })
-                    }
+    renderBrandDetailDialog(){
+        const brand = this.state.brandDetail;
+        if (brand) {
+            return (
+                <Dialog
+                    title={brand.name}
+                    open={!!brand}
+                    onRequestClose={this.handleBrandDetailDialogClose}
+                    autoScrollBodyContent={true}
+                >
+                    <div>
+                        <div className="Brand-image-wrapper">
+                            <img className="Brand-image"  src={brand.image_url} alt="Brand"/>
+                        </div>
+                        <div>
+                            {brand.description}
+                        </div>
+                        <hr/>
+                        Select Gift In Cents
+                        <div>
+                            {this.renderBrandPriceOptions(brand)}
+                        </div>
+                    </div>
+                </Dialog>
+            )
+        }
+    }
+
+    renderEmbeddedRedemption(){
+        if (this.state.embeddedGiftLink) {
+            return (
+                <div className="App-section">
+                    <h3>Embedded Redemption</h3>
+                    <hr/>
+                    <div className="Centered">
+                        <iframe src={this.state.embeddedGiftLink} width="310" height="450" title="embedded redemption"/>
+                    </div>
                 </div>
-            </Dialog>
-        )
+            )
+        } else {
+            return <div></div>
+        }
     }
 
     renderStateForDebugging() {
@@ -331,13 +384,16 @@ class App extends Component {
                             <hr/>
                             {this.renderParameterOptions()}
                         </div>
+
+                        {this.renderEmbeddedRedemption()}
+
                         <div className="App-section">
                             <h3>Brands</h3>
                             <hr/>
                             <Pagination next={this.handlePaginationPrev} prev={this.handlePaginationNext} changeLimit={this.handlePaginationLimitChange} pagination={this.state.brandsPagination}/>
                             { this.renderBrandList() }
                         </div>
-                        {this.renderGiftsDialog()}
+                        {this.renderBrandDetailDialog()}
                         <div className="App-section State-debugging"> {/* comment this out to remove state on screen */}
                             <h3>Current React State (for debugging)</h3>
                             <hr/>
